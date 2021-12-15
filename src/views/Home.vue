@@ -10,16 +10,47 @@
     <div>
       <label>Email:</label>
       <input
-        type="text"
+        type="email"
         @mouseenter="pwdCheck = true"
         @change="checkEmail"
         required
         v-model.trim="email"
       />
+      <p class="error" v-if="emailError">
+        Min 10 karakter hosszú legyen és a betűkön kívül számot is tartalmazzon!
+      </p>
     </div>
-    <p class="error" v-if="pwdError">
-      Min 10 karakter hosszú legyen és a betűkön kívül számot is tartalmazzon!
-    </p>
+
+    <div>
+      <div>
+        <label>Irányítószám:</label>
+        <input
+          type="number"
+          @mouseenter="pwdCheck = true"
+          @change="checkEmail"
+          required
+          v-model.trim="email"
+        />
+        <p class="error" v-if="emailError">
+          Min 10 karakter hosszú legyen és a betűkön kívül számot is
+          tartalmazzon!
+        </p>
+      </div>
+      <div>
+        <label>Város:</label>
+        <input
+          type=""
+          @mouseenter="pwdCheck = true"
+          @change="checkEmail"
+          required
+          v-model.trim="email"
+        />
+        <p class="error" v-if="emailError">
+          Min 10 karakter hosszú legyen és a betűkön kívül számot is
+          tartalmazzon!
+        </p>
+      </div>
+    </div>
 
     <div>
       Igaz: <input type="radio" name="igazhamis" value="igaz" v-model="ih" />
@@ -74,13 +105,14 @@ export default {
   },
   data() {
     return {
-      allasok: [{ nev: "Backend" }, { nev: "Frontend" },{nev: "Full stack"}],
+      allasok: [{ nev: "Backend" }, { nev: "Frontend" }, { nev: "Full stack" }],
 
       fejleszto: "",
       datum: "",
       name: "",
       kuldheto: false,
       email: "",
+      emailError: false,
       pwdError: false,
       ih: "",
       in_valid_name: false,
@@ -106,8 +138,9 @@ export default {
       console.log("valid:" + this.in_valid_name);
       this.kuldheto = this.in_valid_name;
     },
-    checkEmail() {},
-
+    checkEmail() {
+      this.emailError = !EMAIL_ADDRESS_REGEX.test(this.email);
+    },
     pwdCheck() {
       let p = this.email;
       if (p.length > 9 && /[0-9]/.test(p) && /[a-zA-Z]/.test(p)) {
