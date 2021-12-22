@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import Home from '../views/Home.vue'
+import ApplyForm from '../views/ApplyForm.vue'
 
 const routes = [{
     path: '/',
-    name: 'Home',
-    component: Home
+    name: 'ApplyForm',
+    component: ApplyForm
 }]
 
 const router = createRouter({

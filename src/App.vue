@@ -1,8 +1,16 @@
 <template>
-  <div id="nav">
-  </div>
-  <router-view/>
+  <Home />
 </template>
+
+<script>
+import Home from "./views/ApplyForm.vue";
+export default {
+  name: "App",
+  components: {
+    Home,
+  },
+};
+</script>
 
 <style>
 #app {

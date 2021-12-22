@@ -6,7 +6,7 @@
     <div class="row">
       <div class="col-75">
         <div class="container">
-          <form ref="jobForm" @submit="submitForm">
+          <form ref="jobForm" @submit.prevent="submitForm">
             <div class="row">
               <div class="col-50">
                 <h3>Személyes adatok</h3>
@@ -18,7 +18,7 @@
                 </label>
                 <input
                   type="text"
-                  v-model.trim="name"
+                  v-model.trim="detail.name"
                   @change="checkName"
                   required
                   placeholder="Teszt Elek"
@@ -34,7 +34,7 @@
                   type="email"
                   @change="checkEmail"
                   required
-                  v-model.trim="email"
+                  v-model.trim="detail.email"
                   placeholder="balogh.norbert92@gmail.com"
                 />
 
@@ -48,7 +48,7 @@
                   type="text"
                   @change="checkPhoneNumber"
                   required
-                  v-model.trim="phone"
+                  v-model.trim="detail.phone"
                   placeholder="+36991234567"
                 />
 
@@ -68,7 +68,7 @@
                       placeholder="6726"
                       @change="checkZip"
                       required
-                      v-model.trim="zip"
+                      v-model.trim="detail.zip"
                     />
                   </div>
                   <div class="col-50">
@@ -83,7 +83,7 @@
                       placeholder="Szeged"
                       @change="checkCity"
                       required
-                      v-model.trim="city"
+                      v-model.trim="detail.city"
                     />
                   </div>
                 </div>
@@ -101,7 +101,7 @@
                       placeholder="Római krt."
                       @change="checkStreet"
                       required
-                      v-model.trim="street"
+                      v-model.trim="detail.street"
                     />
                   </div>
                   <div class="col-50">
@@ -116,7 +116,7 @@
                       placeholder="21B"
                       @change="checkHouseNumber"
                       required
-                      v-model.trim="houseNumber"
+                      v-model.trim="detail.houseNumber"
                     />
                   </div>
                 </div>
@@ -130,7 +130,8 @@
                   class="error"
                   v-if="
                     needSelect &&
-                    (selectedJob === '' || selectedJob === 'Kérjük válasszon!')
+                    (detail.selectedJob === '' ||
+                      detail.selectedJob === 'Kérjük válasszon!')
                   "
                 >
                   Még nem választottál!
@@ -138,7 +139,7 @@
                 <select
                   id="job-selector"
                   @click="needSelect = true"
-                  v-model="selectedJob"
+                  v-model="detail.selectedJob"
                 >
                   <option v-for="job in jobs" :key="job.name" :value="job.name">
                     {{ job.name }}
@@ -151,7 +152,7 @@
                   id="field"
                   rows="8"
                   cols="49"
-                  v-model.trim="experience"
+                  v-model.trim="detail.experience"
                   @keypress="countChar"
                   maxlength="500"
                 ></textarea>
@@ -169,7 +170,8 @@
                 />
                 <div class="experience-container">
                   <div
-                    v-for="(skill, index) in mySkills"
+                    class="skill"
+                    v-for="(skill, index) in detail.skills"
                     :key="index"
                     :value="skill.name"
                     @click="removeSkill(index)"
@@ -191,48 +193,54 @@
       </div>
     </div>
   </div>
+  <Details v-if="formsubmitted" v-bind:param="detail" />
 </template>
 
 <script>
-import Form from "@/components/Form.vue";
+import Details from "@/views/Details.vue";
 
 const ONLY_LETTERS_REGEX = /^[a-zA-Z]+$/;
 const EMAIL_ADDRESS_REGEX = /\S{3,}@\S+\.[a-z0-9]{2,}/;
 const PHONE_REGEX = /^[+]{1}[0-9]{11}$/;
 
 const POSTCODE_REGEX = /^[1-9]\d\d\d$/;
-const CITY_REGEX = /^[a-zA-Z\s]*$/;
+const CITY_REGEX = /^[a-zA-Záíóöőüűúé\s]*$/;
 const HOUSE_NUMVER_REGEX = /^[1-9][0-9]{0,3}[a-zA-Z]{0,1}$/;
 const MAX_DESCRIPTION_SIZE = 500;
 
 const DEFAULT_SELECTION = "Kérjük válasszon!";
-export default {
-  name: "Home",
+const availablejobs = [
+  { name: DEFAULT_SELECTION },
+  { name: "Backend" },
+  { name: "Frontend" },
+  { name: "Full stack" },
+];
 
+export default {
+  name: "ApplyForm",
   components: {
-    Form,
+    Details,
   },
   data() {
     return {
-      jobs: [
-        { name: DEFAULT_SELECTION },
-        { name: "Backend" },
-        { name: "Frontend" },
-        { name: "Full stack" },
-      ],
-      mySkills: [],
+      result: Object,
+      detail: {
+        skills: [],
+        experience: "",
+        selectedJob: DEFAULT_SELECTION,
+        name: "",
+        email: "",
+        phone: "",
+        zip: "",
+        city: "",
+        street: "",
+        houseNumber: "",
+      },
+
+      jobs: availablejobs,
       skill: "",
       availableCharacterSize: MAX_DESCRIPTION_SIZE,
-      experience: "",
-      selectedJob: DEFAULT_SELECTION,
       needSelect: false,
-      name: "",
-      email: "",
-      phone: "",
-      zip: "",
-      city: "",
-      street: "",
-      houseNumber: "",
 
       nameError: false,
       emailError: false,
@@ -243,11 +251,12 @@ export default {
       houseNumberError: false,
 
       isFormValid: false,
+      formsubmitted: false,
     };
   },
   methods: {
     checkName() {
-      let names = this.name.trim().split(" ");
+      let names = this.detail.name.trim().split(" ");
       this.nameError =
         names.length < 2 ||
         !ONLY_LETTERS_REGEX.test(names[0]) ||
@@ -256,30 +265,30 @@ export default {
         names[1].length < 2;
     },
     checkEmail() {
-      this.emailError = !EMAIL_ADDRESS_REGEX.test(this.email);
+      this.emailError = !EMAIL_ADDRESS_REGEX.test(this.detail.email);
     },
     checkPhoneNumber() {
-      this.phoneError = !PHONE_REGEX.test(this.phone);
+      this.phoneError = !PHONE_REGEX.test(this.detail.phone);
     },
     checkZip() {
-      this.zipError = !POSTCODE_REGEX.test(this.zip);
+      this.zipError = !POSTCODE_REGEX.test(this.detail.zip);
     },
     checkCity() {
-      this.cityError = !CITY_REGEX.test(this.city);
+      this.cityError = !CITY_REGEX.test(this.detail.city);
     },
     checkStreet() {
-      this.streetError = this.street === ""
-      console.log("street:" + this.streetError)
+      this.streetError = this.detail.street === "";
+      console.log("street:" + this.detail.streetError);
     },
     checkHouseNumber() {
-      this.houseNumberError = !HOUSE_NUMVER_REGEX.test(this.houseNumber);
+      this.houseNumberError = !HOUSE_NUMVER_REGEX.test(this.detail.houseNumber);
     },
 
     countChar() {
-      let len = this.experience.length;
+      let len = this.detail.experience.length;
       let reminder = MAX_DESCRIPTION_SIZE - 1 - len;
       if (reminder < 0) {
-        this.experience = this.experience.substring(
+        this.detail.experience = this.detail.experience.substring(
           0,
           MAX_DESCRIPTION_SIZE - 1
         );
@@ -290,37 +299,51 @@ export default {
     addSkill() {
       if (this.skill.includes(";")) {
         let actSkill = this.skill.split(";")[0];
-        this.mySkills.push({ id: this.mySkills.length, name: actSkill });
+        if (actSkill.trim() !== "") {
+          this.detail.skills.push({
+            id: this.detail.length,
+            name: actSkill.trim(),
+          });
+        }
         this.skill = "";
       }
     },
     removeSkill(index) {
-      this.mySkills.splice(index, 1);
+      this.detail.skills.splice(index, 1);
     },
-    submitForm(){
-        alert('Jelenetkezésést továbbítottuk');
-         this.$refs.jobForm.reset();
-    }
+    submitForm() {
+      this.formsubmitted = true;
+      refresh();
+    },
+    refresh() {
+      alert("Jelenetkezésést továbbítottuk");
+    },
   },
   computed: {
     valid() {
       this.isFormValid =
         !this.nameError &&
-        this.name !== "" &&
+        this.detail.name !== "" &&
+        this.detail.name !== undefined &&
         !this.emailError &&
-        this.email !== "" &&
+        this.detail.email !== "" &&
+        this.detail.email !== undefined &&
         !this.phoneError &&
-        this.phone !== "" &&
+        this.detail.phone !== "" &&
+        this.detail.phone !== undefined &&
         !this.zipError &&
-        this.zip !== "" &&
+        this.detail.zip !== "" &&
+        this.detail.zip !== undefined &&
         !this.cityError &&
-        this.city !== "" &&
+        this.detail.city !== "" &&
+        this.detail.city !== undefined &&
         !this.houseNumberError &&
-        this.houseNumber !== "" &&
-        this.selectedJob !== "" &&
-        this.selectedJob !== DEFAULT_SELECTION;
+        this.detail.houseNumber !== "" &&
+        this.detail.houseNumber !== undefined &&
+        this.detail.selectedJob !== "" &&
+        this.detail.selectedJob !== undefined &&
+        this.detail.selectedJob !== DEFAULT_SELECTION;
 
-console.log("form:"+this.isFormValid);
       return this.isFormValid;
     },
   },
@@ -328,6 +351,7 @@ console.log("form:"+this.isFormValid);
 </script>
 <style scoped>
 @import "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
+
 .error {
   padding: 0;
   margin: 0;
@@ -337,146 +361,14 @@ console.log("form:"+this.isFormValid);
 .error_border {
   border-bottom: 1px solid red;
 }
-div {
-  padding: 4px;
-}
-input {
-  border: none;
-  border-bottom: 1px solid #ccc;
-}
 
-.experience-container {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  flex-flow: row wrap;
-}
-
-select {
-  width: 100%;
-  height: 38px;
-  padding: 5px 11px;
-  margin-bottom: 20px;
-}
-
-select:not(.ant-select-customize-input) .ant-select-selector {
-  position: relative;
-  background-color: #fff;
-  border: 1px solid #d9d9d9;
-  border-radius: 2px;
-  -webkit-transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-  transition: all 0.3s cubic-bezier(0.645, 0.045, 0.355, 1);
-}
-
-body {
-  font-family: Arial;
-  font-size: 17px;
-  padding: 8px;
-}
-
-.form {
-  display: flex;
-  flex-flow: row wrap;
-  justify-content: center;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-.row {
-  display: -ms-flexbox; /* IE10 */
-  display: flex;
-  -ms-flex-wrap: wrap; /* IE10 */
-  flex-wrap: wrap;
-  margin: 0 -16px;
-}
-
-.col-25 {
-  -ms-flex: 25%; /* IE10 */
-  flex: 25%;
-}
-
-.col-50 {
-  -ms-flex: 50%; /* IE10 */
-  flex: 50%;
-}
-
-.col-75 {
-  -ms-flex: 75%; /* IE10 */
-  flex: 75%;
-}
-
-.col-25,
-.col-50,
-.col-75 {
-  padding: 0 16px;
-}
-
-.container {
-  background-color: #f2f2f2;
-  padding: 5px 20px 15px 20px;
-  border: 1px solid lightgrey;
-  border-radius: 3px;
-}
-
-input[type="email"],
-input[type="text"] {
-  width: 100%;
-  margin-bottom: 20px;
-  padding: 12px;
-  border: 1px solid #ccc;
-  border-radius: 3px;
-}
-
-label {
-  margin-bottom: 10px;
-  position: relative;
-  text-align: left;
-  display: block;
-}
-
-.icon-container {
-  margin-bottom: 20px;
-  padding: 7px 0;
-  font-size: 24px;
-}
-
-.btn {
-  background-color: #04aa6d;
-  color: white;
-  padding: 12px;
-  margin: 10px 0;
-  border: none;
-  width: 100%;
-  border-radius: 3px;
+.skill {
+  display: inline-block;
+  margin: 1px 5px 0 0;
+  padding: 3px 6px;
+  border-radius: 20px;
+  color: #777;
+  background: cyan;
   cursor: pointer;
-  font-size: 17px;
-}
-
-.btn:hover {
-  background-color: #45a049;
-}
-
-a {
-  color: #2196f3;
-}
-
-hr {
-  border: 1px solid lightgrey;
-}
-
-span.price {
-  float: right;
-  color: grey;
-}
-
-@media (max-width: 800px) {
-  .row {
-    flex-direction: column;
-  }
-  .col-25 {
-    margin-bottom: 20px;
-  }
 }
 </style>
